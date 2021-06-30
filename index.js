@@ -11,15 +11,21 @@ export class NoiseDirective extends SchemaDirectiveVisitor{
 
     visitFieldDefinition(field){
         const {resolve = defaultFieldResolver} = field;
-        field.resolve = async function(...args){
-            const res = await resolve.apply(this,args);
-            return addNoise(res, {
-                typeOfDistribution:"", 
-                distributionParameters:{
+        const argumentsForNoise = this.getArgumentForRole();
+        field.resolve = async function(result, args, context, info){
+            const res = await resolve.apply(this,[result, args, context, info]);
+            //in context -> req -> req.headers -> req.authorization || req.cookies.token 
+            //evaluate role (https://github.com/grand-stack/graphql-auth-directives/blob/master/src/index.js)
+            console.log(argumentsForNoise);
 
+            return addNoise(res, {
+                typeOfDistribution:"uniformInt", 
+                distributionParameters:{
+                    max: 100,
+                    min: 100,
                 }, 
                 valueParameters:{
-
+                    isInt: true,
                 }
             })
         }
