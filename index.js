@@ -1,6 +1,7 @@
-import { addNoise } from "anonymizer";
+import { addNoise, generalize } from "anonymizer";
 import { SchemaDirectiveVisitor } from "graphql-tools";
 const { defaultFieldResolver } = require('graphql');
+import * as jwt from "jsonwebtoken";
 
 export class NoiseDirective extends SchemaDirectiveVisitor{
     //add getDirectiveDeclaration (mentioned as best-practice here: https://www.apollographql.com/docs/apollo-server/schema/creating-directives/)
@@ -11,58 +12,85 @@ export class NoiseDirective extends SchemaDirectiveVisitor{
 
     visitFieldDefinition(field){
         const {resolve = defaultFieldResolver} = field;
-        const noiseArgumentsOnRole = this.getArgumentForRoles();
         field.resolve = async function(result, args, context, info){
             const res = await resolve.apply(this,[result, args, context, info]);
-            //in context -> req -> req.headers -> req.authorization || req.cookies.token 
-            //evaluate role (https://github.com/grand-stack/graphql-auth-directives/blob/master/src/index.js)
             
-            /*const token = verifyAndDecodeToken(context);
+            const token = verifyAndDecodeToken(context);
             const role = token.role;
 
-            noiseArgument = noiseArgumentsOnRole[role];
-            if(!noiseArgument) throw new Error("There is no noise argument specified for this role.")*/
+            var noiseArgument = this.getAnonymizationParameter(role, result, args, context, info);
+            if(!noiseArgument) {
+                return res;
+            }
 
+            return addNoise(res, noiseArgument)
+        }.bind(this);
+    }
+}
 
+export class GeneralizationDirective extends SchemaDirectiveVisitor{
+    //add getDirectiveDeclaration (mentioned as best-practice here: https://www.apollographql.com/docs/apollo-server/schema/creating-directives/)
 
-            /*return addNoise(res, {
-                typeOfDistribution:"uniformInt", 
-                distributionParameters:{
-                    max: 100,
-                    min: 100,
-                }, 
-                valueParameters:{
-                    isInt: false,
-                }
-            })*/
+    static getDirectiveDeclaration(directiveName, schema){
+        return null;
+    }
 
-            return addNoise(res, {
-                typeOfDistribution:"normal", 
-                distributionParameters:{
-                    mean: 0,
-                    standardDeviation: 1,
-                }, 
-                valueParameters:{
-                    isInt: false,
-                }
-            })
-        }
+    visitFieldDefinition(field){
+        const {resolve = defaultFieldResolver} = field;
+        field.resolve = async function(result, args, context, info){
+            const res = await resolve.apply(this,[result, args, context, info]);
+            
+            const token = verifyAndDecodeToken(context);
+            const role = token.role;
+
+            var generalizationArgument = this.getAnonymizationParameter(role, result, args, context, info);
+            if(!generalizationArgument) {
+                return res;
+            }
+
+            return generalize(res, generalizationArgument)
+        }.bind(this);
+    }
+}
+
+export class HashDirective extends SchemaDirectiveVisitor{
+    //add getDirectiveDeclaration (mentioned as best-practice here: https://www.apollographql.com/docs/apollo-server/schema/creating-directives/)
+
+    static getDirectiveDeclaration(directiveName, schema){
+        return null;
+    }
+
+    visitFieldDefinition(field){
+        const {resolve = defaultFieldResolver} = field;
+        field.resolve = async function(result, args, context, info){
+            const res = await resolve.apply(this,[result, args, context, info]);
+            
+            const token = verifyAndDecodeToken(context);
+            const role = token.role;
+
+            var hashingArgument = this.getHashingParameter(role, result, args, context, info);
+            if(!hashingArgument) {
+                return res;
+            }
+
+            return hash(res, hashingArgument)
+        }.bind(this);
     }
 }
 
 const verifyAndDecodeToken = function(context){
     
-    if(!context || !context.req || !context.req.headers || !context.req.headers.Authorization) {
-        throw new Error("No authorization token.");
+    if(!context || !context.req || !context.req.headers || !context.req.headers.authorization) {
+        throw new AccessControlError("No authorization token.");
     }
   
-    const token = req.headers.authorization;
+    const token = context.req.headers.authorization;
 
     try {
-        //const id_token = token.replace("Bearer ", "");
+        const id_token = token.replace("Bearer ", "");
         const { JWT_SECRET, JWT_NO_VERIFY } = process.env;
   
-        if (!JWT_SECRET && JWT_NO_VERIFY) {
+        if (JWT_NO_VERIFY) {
             return jwt.decode(id_token);
         } else {
             return jwt.verify(id_token, JWT_SECRET, {
@@ -77,6 +105,10 @@ const verifyAndDecodeToken = function(context){
       }
     }
 };
-  
 
-//add other directives
+class AccessControlError extends Error{
+    constructor(message) {
+        super(message);
+        this.name = "AccessControlError"
+    }
+}
