@@ -17,11 +17,11 @@ export class NoiseDirective extends SchemaDirectiveVisitor{
             //in context -> req -> req.headers -> req.authorization || req.cookies.token 
             //evaluate role (https://github.com/grand-stack/graphql-auth-directives/blob/master/src/index.js)
             
-            /*const token = verifyAndDecodeToken(context);
+            const token = verifyAndDecodeToken(context);
             const role = token.role;
 
             noiseArgument = noiseArgumentsOnRole[role];
-            if(!noiseArgument) throw new Error("There is no noise argument specified for this role.")*/
+            if(!noiseArgument) throw new Error("There is no noise argument specified for this role.")
 
 
 
