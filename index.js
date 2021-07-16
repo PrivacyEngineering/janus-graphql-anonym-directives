@@ -2,9 +2,19 @@ import { AccessControlError, verifyAndDecodeToken } from "./utils"
 
 import { addNoise, hash, generalize } from "anonymizer";
 import { SchemaDirectiveVisitor } from "graphql-tools";
-const { defaultFieldResolver } = require('graphql');
+const { defaultFieldResolver, GraphQLDirective, DirectiveLocation } = require('graphql');
 
 class AnonymizationSchemaDirectiveVisitor extends SchemaDirectiveVisitor{
+    //https://www.apollographql.com/blog/graphql/directives/eusable-graphql-schema-directives/
+    static getDirectiveDeclaration(directiveName) {
+        return new GraphQLDirective({
+          name: directiveName,
+          locations: [
+            DirectiveLocation.FIELD_DEFINITION,
+          ],
+        });
+    }
+
     async getAnonymizedResult(resolve, anonymizationCallback, result, args, context, info){
         const res = await resolve.apply(this,[result, args, context, info]);
                 
@@ -20,12 +30,6 @@ class AnonymizationSchemaDirectiveVisitor extends SchemaDirectiveVisitor{
 }
 
 export class NoiseDirective extends AnonymizationSchemaDirectiveVisitor{
-    //add getDirectiveDeclaration (mentioned as best-practice here: https://www.apollographql.com/docs/apollo-server/schema/creating-directives/)
-
-    static getDirectiveDeclaration(directiveName, schema){
-        return null;
-    }
-
     visitFieldDefinition(field){
         const {resolve = defaultFieldResolver} = field;
         field.resolve = async function(result, args, context, info){
@@ -59,12 +63,6 @@ export const noiseParameters = {
 
 
 export class HashDirective extends AnonymizationSchemaDirectiveVisitor{
-    //add getDirectiveDeclaration (mentioned as best-practice here: https://www.apollographql.com/docs/apollo-server/schema/creating-directives/)
-
-    static getDirectiveDeclaration(directiveName, schema){
-        return null;
-    }
-
     visitFieldDefinition(field){
         const {resolve = defaultFieldResolver} = field;
         field.resolve = async function(result, args, context, info){
@@ -89,12 +87,6 @@ export const hashingParameters = {
 
 
 export class GeneralizationDirective extends AnonymizationSchemaDirectiveVisitor{
-    //add getDirectiveDeclaration (mentioned as best-practice here: https://www.apollographql.com/docs/apollo-server/schema/creating-directives/)
-
-    static getDirectiveDeclaration(directiveName, schema){
-        return null;
-    }
-
     visitFieldDefinition(field){
         const {resolve = defaultFieldResolver} = field;
         field.resolve = async function(result, args, context, info){
