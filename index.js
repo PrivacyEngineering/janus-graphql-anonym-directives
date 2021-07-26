@@ -1,6 +1,5 @@
 import { AccessControlError, verifyAndDecodeToken } from "./utils"
-
-import { addNoise, hash, generalize } from "anonymizer";
+import { addNoise, hash, generalize } from "value-anonymizer";
 import { SchemaDirectiveVisitor } from "graphql-tools";
 const { defaultFieldResolver, GraphQLDirective, DirectiveLocation } = require('graphql');
 
