@@ -1,10 +1,10 @@
-# graphql-access-control
+# graphql-anony-directives
 This package provides special ```SchemaDirectiveVisitor``` classes. Those can be added to schemas: https://www.apollographql.com/docs/apollo-server/schema/directives/ 
 
 ## Usage
 ### Installation
 ```sh
-npm install xxx
+npm install graphql-anony-directives
 ```
 ### Requirements
 The anonymization directives use JWT tokens to extract to role of the current requester. Therefore, you must provide the JWT secret as environment variable.

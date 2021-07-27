@@ -1,6 +1,6 @@
 {
   "name": "graphql-anonym-directives",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Provides some graphql directives to add role based anonymization to graphql schemata.",
   "main": "index.js",
   "repository": {
