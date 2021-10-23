@@ -123,8 +123,8 @@ export class SuppressDirective extends SchemaDirectiveVisitor{
 
             const allowedRoles = this.getAllowedRoles(info)
         
-            if(!allowedRoles.includes(role)) {
-                throw new AccessControlError("Not allowed to access field " + info.fieldName + "!")
+            if(!allowedRoles || !allowedRoles.includes(role)) {
+                return null;
             }
 
             return res;
