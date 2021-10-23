@@ -31,6 +31,8 @@ To use the anonymization directives, you need to import them and declare the ```
 
 Don't forget to add the directive as argument when creating the apollo server.
 
+There is also a directive that suppresses data and replaces them with ```null``` if the requester does not have a certain role that can be definded. Therefore, declare the function ```getAllowedRoles``` which returns an array of roles that have the permission to access the corresponding data field. 
+
 A whole implementation could look like this:
 
 ```js

@@ -1,7 +1,7 @@
 import { AccessControlError, verifyAndDecodeToken } from "./utils"
 import { addNoise, hash, generalize } from "value-anonymizer";
 import { SchemaDirectiveVisitor } from "graphql-tools";
-const { defaultFieldResolver, GraphQLDirective, DirectiveLocation } = require('graphql');
+import { defaultFieldResolver, GraphQLDirective, DirectiveLocation } from "graphql";
 
 class AnonymizationSchemaDirectiveVisitor extends SchemaDirectiveVisitor{
     //https://www.apollographql.com/blog/graphql/directives/eusable-graphql-schema-directives/
@@ -101,4 +101,33 @@ export const generalizationParameters = {
             numberOfHideCharacters: 3
         }
     },
+}
+
+export class SuppressDirective extends SchemaDirectiveVisitor{
+    static getDirectiveDeclaration(directiveName, schema) {
+        return new GraphQLDirective({
+          name: directiveName,
+          locations: [
+            DirectiveLocation.FIELD_DEFINITION,
+          ]
+        });
+    }
+
+    visitFieldDefinition(field){
+        const {resolve = defaultFieldResolver} = field;
+        field.resolve = async function(result, args, context, info){
+            const res = await resolve.apply(this,[result, args, context, info]);
+                
+            const token = verifyAndDecodeToken(context);
+            const role = token.role;
+
+            const allowedRoles = this.getAllowedRoles(info)
+        
+            if(!allowedRoles || !allowedRoles.includes(role)) {
+                return null;
+            }
+
+            return res;
+        }.bind(this);
+    }
 }
